@@ -1,0 +1,198 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import linear_model
+from sklearn.model_selection import train_test_split
+
+# nuskaityti duomenys
+#data = pd.read_csv('exams.csv', sep = ',')
+#print (data.head())
+
+# eilutes
+# print (data.shape [0])
+
+# stulpeliai
+# print (data.shape [1])
+
+# istrintas race/ethnicity stulpelis
+# print (data.drop (columns = 'race/ethnicity'))
+
+# pakoreguoti duomenys be race/ethnicity stulpelio
+data = pd.read_csv('exams.csv', sep=',').drop(columns='race/ethnicity')
+# print (data)
+
+# stulpeliu pavadinimai
+# print (data.columns)
+
+# stulpeliai pervadinti be tarpu
+data = data.rename(columns={'parental level of education': 'parental_level_of_education'})
+data = data.rename(columns={'test preparation course': 'test_preparation'})
+data = data.rename(columns={'math score': 'math_score'})
+data = data.rename(columns={'reading score': 'reading_score'})
+data = data.rename(columns={'writing score': 'writing_score'})
+
+# patikrinti, ar yra nan reiksmiu
+# print (data.isnull().values.any())
+
+# sukurti stulpeli final score
+data['final_score'] = (data['math_score'] + data['reading_score'] + data['writing_score'])/3
+#print (data['parental_level_of_education'].value_counts())
+
+#sukurti stulpeli student id ir nustatyti ji kaip indeksavima
+data['Student_id'] = pd.Series(np.arange(1, 1001))
+data = data.set_index("Student_id")
+
+# sugrupuoti issilavinima i "with degree' ir 'no degree'
+def tikrinimias(x):
+    if (('high school' in x) or ('some high school' in x)):
+        return 'no degree'
+    else:
+        return 'with degree'
+
+
+data["parental_level_of_education_grouped"] = data["parental_level_of_education"].apply(tikrinimias)
+
+#sugrupuoti scores i pazymius
+def scores_converter_to_grades (x):
+    if x >= 90:
+        return 'A'
+    elif x >= 80:
+        return 'B'
+    elif x >= 70:
+        return 'C'
+    elif x >= 60:
+        return 'D'
+    elif x <= 59:
+        return 'F'
+
+data['final_score_marks'] = data['final_score'].apply(scores_converter_to_grades)
+
+# mokiniu rezultatai pagal tevu issilavinima
+#print (data.groupby ('parental_level_of_education_grouped').mean().to_string())
+#data.groupby ('parental_level_of_education_grouped').mean().plot(kind='bar')
+#plt.xlabel('Parental education')
+#plt.ylabel('Scores')
+#plt.title('Scores by parental education')
+#plt.show()
+
+#rezultatai pagal lyti
+#print (data.groupby ('gender').mean().to_string())
+#data.groupby ('gender').mean().plot(kind='bar')
+#plt.xlabel('Gender')
+#plt.ylabel('Scores')
+#plt.title('Scores by gender')
+#plt.show()
+
+#data.groupby(['parental_level_of_education_grouped','gender']).mean()[['math_score']].unstack(level=1).plot(kind="bar")
+#plt.show()
+
+# rezultatai pagal pietu valgyma/nevalgyma
+
+#print (data.groupby ('lunch'). mean ())
+#print (data.groupby(['gender','lunch']).mean())
+#data.groupby ('lunch').mean().plot(kind='bar')
+#plt.xlabel('Lunch taken or not?')
+#plt.ylabel('Scores')
+#plt.title('Scores by lunch')
+#plt.show()
+
+#rezultatai pagal ruosimasi egzaminui
+#print (data.groupby('test_preparation').mean())
+#(data.groupby(['test_preparation', 'gender']).mean())
+#data.groupby ('test_preparation').mean().plot(kind='bar')
+#plt.xlabel('Prepared for exam or not?')
+#plt.ylabel('Scores')
+#plt.title('Scores by preparation')
+#plt.show()
+
+#grades by parents education
+#print (data['final_score_marks'].value_counts())
+#print (data ['parental_level_of_education_grouped'].value_counts())
+#data.groupby(["final_score_marks", "parental_level_of_education_grouped"]).count().final_score.unstack(level=1).plot(kind="bar")
+#plt.xlabel('Final grades')
+#plt.ylabel('Count of grade')
+#plt.title('Grades by parental education')
+#plt.legend(title='Parental education level')
+#plt.show()
+
+#grades by gender
+#print (data ['gender'].value_counts())
+#data.groupby(["final_score_marks", "gender"]).count().final_score.unstack(level=1).plot(kind="bar")
+#plt.xlabel('Final grades')
+#plt.ylabel('Count of grade')
+#plt.title('Grades by gender')
+#plt.legend(title='Gender')
+#plt.show()
+
+#grades by lunch
+#data.groupby(["final_score_marks", "lunch"]).count().final_score.unstack(level=1).plot(kind="bar")
+#print (data ['lunch'].value_counts())
+#plt.xlabel('Final grades')
+#plt.ylabel('Count of grade')
+#plt.title('Grades by lunch')
+#plt.show()
+
+#grades by test_preparation
+#print(data ['test_preparation'].value_counts())
+#data.groupby(["final_score_marks", "test_preparation"]).count().final_score.unstack(level=1).plot(kind="bar")
+#plt.xlabel('Final grades')
+#plt.ylabel('Count of grade')
+#plt.title('Grades by preparation')
+#plt.show()
+
+#top 10 best and worst students
+#isrikiavimas_geriausiu = data.sort_values(by= ['final_score'],ascending = False)
+#geriausi = isrikiavimas_geriausiu.drop(columns = ['math_score', 'reading_score', 'writing_score'])
+#top_geriausi = geriausi [:10].to_csv('geriausi.csv')
+#print (geriausi.head(20).to_string())
+
+#isrikiavimas_blogiausiu = data.sort_values(by= ['final_score'],ascending = True)
+#blogiausi = isrikiavimas_blogiausiu.drop(columns = ['math_score', 'reading_score', 'writing_score'])
+#top_blogiausi = blogiausi [:10].to_csv('blogiausi.csv')
+#print (blogiausi.head(10).to_string())
+
+#koreliacijos
+#print (data ['math_score'].corr(data['writing_score']))
+#print (data['math_score'].corr(data['reading_score']))
+#print (data ['math_score'].corr(data['final_score']))
+#print (data ['writing_score'].corr(data['reading_score']))
+#print (data ['reading_score'].corr(data['final_score']))
+#print (data ['writing_score'].corr(data['final_score']))
+
+
+#linijine regresija matematika ir rasymas
+#y = data.math_score.values.reshape(-1,1)
+#X = data.writing_score.values.reshape(-1,1)
+#lm = linear_model.LinearRegression()
+#xTrain, xTest, yTrain, yTest = train_test_split(X, y, test_size = 0.2)
+#lm.fit(xTrain,yTrain)
+#yhat = lm.predict(X)
+
+#print((len(y)))
+#plt.scatter(X,y)
+#plt.plot(X, yhat, color='red')
+#plt.xlabel('Writing scores')
+#plt.ylabel('Math scores')
+#print(lm.coef_)
+#print(lm.intercept_)
+#print(lm.score(xTest,yTest))
+#plt.show()
+
+#linijine regresija total ir rasymas
+#y = data.final_score.values.reshape(-1,1)
+#X = data.writing_score.values.reshape(-1,1)
+#lm = linear_model.LinearRegression()
+#xTrain, xTest, yTrain, yTest = train_test_split(X, y, test_size = 0.2)
+#lm.fit(xTrain,yTrain)
+#yhat = lm.predict(X)
+
+#print((len(y)))
+#plt.scatter(X,y)
+#plt.plot(X, yhat, color='red')
+#plt.xlabel('Writing scores')
+#plt.ylabel('Final scores')
+#print(lm.coef_)
+#print(lm.intercept_)
+#print(lm.score(xTest,yTest))
+#plt.show()
+
