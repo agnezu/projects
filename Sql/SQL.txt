@@ -1,0 +1,49 @@
+Pateikite keliautoju vardus ir pavardes, kurie keliauja su vaikais, taciau pasirinko ne “kids-friendly’ tura?
+
+SELECT traveler_name, traveler_lname, traveler.reservation_id FROM traveler
+JOIN tour_reservation ON traveler.reservation_id = tour_reservation.reservation_id
+JOIN tour ON tour.tour_id = tour_reservation.tour_id
+WHERE traveler.traveling_with_kids IS true AND tour.kids_friendly IS false
+
+
+
+Sudeliokite rezervacijas mažejimo tvarka pagal sumoketa pinigu kieki
+
+SELECT traveler.reservation_id,  
+tour.tour_price_perperson * (
+	SELECT COUNT(*) FROM traveler 
+	WHERE traveler.reservation_id = tour_reservation.reservation_id 
+	GROUP BY traveler.reservation_id) AS suma
+FROM traveler
+JOIN tour_reservation ON traveler.reservation_id = tour_reservation.reservation_id
+JOIN tour ON tour.tour_id = tour_reservation.tour_id
+GROUP BY traveler.reservation_id, tour.tour_id, tour_reservation.reservation_id
+ORDER BY suma DESC
+
+
+
+Pateikite rezervaciju numerius tu turu, kuriems vadovavo gidas, kurio licenzija buvo pasibaigusi.
+SELECT reservation_id FROM tour_reservation
+JOIN employees ON tour_reservation.guide_assigned = employees.employee_id
+JOIN license ON license.license_id = employees.license_id
+WHERE tour_reservation.tour_end_date > license.license_end_date
+
+Išrikiuokite turus pagal populiaruma keliaujant su vaikais
+SELECT tour_title, COUNT(*) AS kiekis FROM tour
+JOIN tour_reservation ON tour.tour_id = tour_reservation.tour_id
+JOIN traveler ON traveler.reservation_id = tour_reservation.reservation_id
+WHERE traveler.traveling_with_kids IS true
+GROUP BY tour.tour_title
+ORDER BY kiekis DESC
+
+Koks mokejimo tipas yra populiariausias tarp keliaujanciu su vaikais?
+SELECT payment_type, COUNT(*)
+FROM reservation
+JOIN traveler ON traveler.reservation_id = reservation.reservation_id
+WHERE traveler.traveling_with_kids IS true
+GROUP BY payment_type
+HAVING COUNT(*) = (SELECT MAX(kiekis) FROM (SELECT payment_type, COUNT(*) AS kiekis
+FROM reservation
+JOIN traveler ON traveler.reservation_id = reservation.reservation_id
+WHERE traveler.traveling_with_kids IS true
+GROUP BY payment_type) reservation)
